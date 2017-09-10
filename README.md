@@ -6,11 +6,11 @@ Lets you use a spreadsheet as an app's database
 
 ## Example
 
-  var GSAPI = require('gsapi')
-  var gsapi = new GSAPI({
-    clientId: 'foo',
-    spreadsheetId: 'bar'
-  })
-  gsapi.signIn()
-  gsapi.getAll('cars', cars => cars.map(car => console.log(car)))
-  gsapi.insert('cars', ['Toyota', 'Prius', 2016, 'any data really'])
+      var GSAPI = require('gsapi')
+      var gsapi = new GSAPI({
+        clientId: 'foo',
+        spreadsheetId: 'bar'
+      })
+      gsapi.signIn()
+      gsapi.getAll('cars', cars => cars.map(car => console.log(car)))
+      gsapi.insert('cars', ['Toyota', 'Prius', 2016, 'any data really'])
