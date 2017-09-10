@@ -1,0 +1,19 @@
+{
+  "name": "google-sheets-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vbachev/google-sheets-api.git"
+  },
+  "author": "Vasil Bachev",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vbachev/google-sheets-api/issues"
+  },
+  "homepage": "https://github.com/vbachev/google-sheets-api#readme"
+}
