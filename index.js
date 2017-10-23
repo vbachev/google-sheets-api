@@ -141,12 +141,12 @@ function GSAPI (config, onInit) {
 	}
 
 	return {
-		signIn,
-		signOut,
-		get,
-		getAll,
-		insert,
-		update,
-		remove
+		signIn: signIn,
+		signOut: signOut,
+		get: get,
+		getAll: getAll,
+		insert: insert,
+		update: update,
+		remove: remove
 	}
 }
