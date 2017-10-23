@@ -44,7 +44,7 @@ function GSAPI (config, onInit) {
 			callback(true)
 			return
 		}
-		gapi.auth2.getAuthInstance().isSignedIn.listen(value => {
+		gapi.auth2.getAuthInstance().isSignedIn.listen(function (value) {
 			isSignedIn = value
 			callback(value)
 		})
@@ -93,7 +93,7 @@ function GSAPI (config, onInit) {
 		})
 		.then(parseResponse, handleError)
 		.then(function (data) {
-			const range = data.updatedRange || data.updates.updatedRange
+			var range = data.updatedRange || data.updates.updatedRange
 			return parseInt(range.split('!A')[1].split(':')[0], 10)
 		})
 		.then(callback)
