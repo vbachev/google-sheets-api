@@ -147,6 +147,8 @@ function GSAPI (clientId, onInit) {
 	}
 
 	return {
+		isInitialized: function () { return _isInitialized },
+		isSignedIn: function () { return _isSignedIn },
 		signIn: signIn,
 		signOut: signOut,
 		setSpreadsheetId: setSpreadsheetId,
