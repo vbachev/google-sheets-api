@@ -55,6 +55,17 @@ function GSAPI (clientId, onInit) {
 		_gapi.auth2.getAuthInstance().signOut()
 	}
 
+	function getProfile () {
+		if (!_isSignedIn) return
+		const profile = _gapi.auth2.getAuthInstance().currentUser.get().getBasicProfile()
+		return {
+			id: profile.getId(),
+			name: profile.getName(),
+			email: profile.getEmail(),
+			image: profile.getImageUrl(),
+		}
+	}
+
 	function setSpreadsheetId (id) {
 		_spreadsheetId = id
 	}
@@ -148,14 +159,17 @@ function GSAPI (clientId, onInit) {
 
 	return {
 		isInitialized: function () { return _isInitialized },
-		isSignedIn: function () { return _isSignedIn },
-		signIn: signIn,
-		signOut: signOut,
 		setSpreadsheetId: setSpreadsheetId,
 		get: get,
 		getAll: getAll,
 		insert: insert,
 		update: update,
-		remove: remove
+		remove: remove,
+		user: {
+			isSignedIn: function () { return _isSignedIn },
+			signIn: signIn,
+			signOut: signOut,
+			getProfile: getProfile
+		}
 	}
 }
