@@ -50,9 +50,9 @@ function GSAPI (clientId, onInit) {
 		_gapi.auth2.getAuthInstance().signIn()
 	}
 
-	function signOut () {
-		// @TODO: callback
+	function signOut (callback) {
 		_gapi.auth2.getAuthInstance().signOut()
+		.then(callback, _handleError)
 	}
 
 	function getProfile () {
@@ -150,7 +150,7 @@ function GSAPI (clientId, onInit) {
 	}
 
 	function _parseResponse (response) {
-		return JSON.parse(response.body)
+		return response.result
 	}
 
 	function _handleError (response) {
