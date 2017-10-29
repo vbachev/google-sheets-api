@@ -1,53 +1,62 @@
 module.exports = GSAPI
 
 // EXAMPLE USAGE:
-// var gsapi = new GSAPI('foo', () => {
-// 	gsapi.setSpreadsheetId('bar')
+// var gsapi = new GSAPI({
+//   clientId: 'foo',
+//   spreadsheet: { name: 'foo' sheets: ['cars', 'customers'] },
+// }, () => {
 // 	gsapi.signIn(() => {
 // 		gsapi.getAll('cars', cars => cars.map(car => console.log(car)))
 // 		gsapi.insert('cars', ['Toyota', 'Prius', 2016, 'any data really'])
 // 	})
 // })
 
-function GSAPI (clientId, onInit) {
+function GSAPI (config, onInit) {
 	var _gapi = window.gapi
 
 	if (!_gapi)
 		throw new Error('GSAPI: Google Sheets API not found! https://apis.google.com/js/api.js must be loaded first.')
-	if (!clientId)
-		throw new Error('GSAPI: You must provide a clientId as argument to the constructor. Get one from Google Cloud Console')
+	if (!config.clientId)
+		throw new Error('GSAPI: You must provide a clientId field in the config argument to the constructor. Get one from Google Cloud Console')
+	if (!config.spreadsheet)
+		throw new Error('GSAPI: You must provide a spreadsheet field in the config argument to the constructor. Its structure has to include the keys "name" (string) and "sheets" (array of strings)')
 
 	var _isInitialized = false
 	var _isSignedIn = false
+	var _spreadsheetId = ''
 
 	_gapi.load('client:auth2', function () {
 		var callback = onInit || function () {}
     _gapi.client.init({
-			discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
-			clientId: clientId,
-			scope: 'https://www.googleapis.com/auth/spreadsheets'
+			discoveryDocs: [
+				'https://sheets.googleapis.com/$discovery/rest?version=v4',
+				'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
+			],
+			clientId: config.clientId,
+			scope: 'https://www.googleapis.com/auth/drive.file'
 		}).then(function () {
 			_isInitialized = true
 			_isSignedIn = _gapi.auth2.getAuthInstance().isSignedIn.get()
 			_gapi.auth2.getAuthInstance().isSignedIn.listen(function (value) {
 				_isSignedIn = value
 			})
-			callback()
+			if (_isSignedIn)
+				_setSpreadsheetId(callback)
+			else
+				callback()
 		})
   })
 
 	function signIn (callback) {
 		if (!_isInitialized) throw new Error('GSAPI: Client API not initialized yet.')
-		callback = callback || function () {}
 		if (_isSignedIn) {
 			callback(true)
 			return
 		}
-		_gapi.auth2.getAuthInstance().isSignedIn.listen(function (value) {
-			// @TODO: this should execute only once (ie .once())
-			callback(value)
-		})
 		_gapi.auth2.getAuthInstance().signIn()
+		.then(function () {
+			_setSpreadsheetId(callback.bind(this, true))
+		}, _handleError)
 	}
 
 	function signOut (callback) {
@@ -66,8 +75,76 @@ function GSAPI (clientId, onInit) {
 		}
 	}
 
-	function setSpreadsheetId (id) {
-		_spreadsheetId = id
+	function _setSpreadsheetId (callback) {
+		_getSpreadsheetId(function (id) {
+			_spreadsheetId = id
+			callback()
+		})
+	}
+
+	function _getSpreadsheetId (callback) {
+		getSpreadsheet(function (spreadsheet) {
+			if (spreadsheet) {
+				callback(spreadsheet.spreadsheetId)
+			} else {
+				_createSpreadsheet(function (spreadsheet) {
+					callback(spreadsheet.spreadsheetId)
+				})
+			}
+		})
+	}
+
+	function getSpreadsheet (callback) {
+		if (_spreadsheetId) {
+			_getSpreadsheetById(_spreadsheetId, function (spreadsheet) {
+				callback(spreadsheet)
+			})
+			return
+		}
+		_getFileByName(config.spreadsheet.name, function (file) {
+			if (!file) {
+				callback()
+			} else {
+				_getSpreadsheetById(file.id, function (spreadsheet) {
+					callback(spreadsheet)
+				})
+			}
+		})
+	}
+
+	function _getFileByName (name, callback) {
+		_gapi.client.drive.files
+		.list({
+			corpora: 'user',
+			spaces: 'drive',
+			q: "name = '" + name + "'"
+		})
+		.then(_parseResponse, _handleError)
+		.then(function (result) {
+			return result.files[0]
+		})
+		.then(callback)
+	}
+
+	function _getSpreadsheetById (id, callback) {
+		_gapi.client.sheets.spreadsheets
+		.get({ spreadsheetId: id })
+		.then(_parseResponse, _handleError)
+		.then(callback)
+	}
+
+	function _createSpreadsheet (callback) {
+		_gapi.client.sheets.spreadsheets.create({}, {
+			properties: {
+				title: config.spreadsheet.name,
+				locale: 'en'
+			},
+			sheets: config.spreadsheet.sheets.map(function (sheetName) {
+				return { properties: { title: sheetName } }
+			})
+		})
+		.then(_parseResponse, _handleError)
+		.then(callback)
 	}
 
 	function get (sheetName, id, callback) {
@@ -159,12 +236,12 @@ function GSAPI (clientId, onInit) {
 
 	return {
 		isInitialized: function () { return _isInitialized },
-		setSpreadsheetId: setSpreadsheetId,
 		get: get,
 		getAll: getAll,
 		insert: insert,
 		update: update,
 		remove: remove,
+		getSpreadsheet: getSpreadsheet,
 		user: {
 			isSignedIn: function () { return _isSignedIn },
 			signIn: signIn,

@@ -1,6 +1,6 @@
 {
   "name": "google-sheets-api",
-  "version": "2.0.0",
+  "version": "0.3.0",
   "description": "Wrapper around the Google Sheets API",
   "author": {
     "name" : "Vasil Bachev",
